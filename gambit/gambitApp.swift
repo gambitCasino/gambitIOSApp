@@ -13,6 +13,7 @@ struct gambitApp: App {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.dark)
+                .environmentObject(AlertViewModel())
         }
     }
 }

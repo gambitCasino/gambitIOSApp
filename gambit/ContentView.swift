@@ -11,102 +11,49 @@ import SwiftKeychainWrapper
 import SVGView
 
 struct ContentView: View {
-    @State private var selectedTab: String = "Home"
-    @State private var splashScreen = false
+    @State private var selectedTab: Tab = .home
     @EnvironmentObject var alertViewModel: AlertViewModel
     @StateObject private var accountModel: Account = Account()
     
     var body: some View {
-        NavigationView {
-            VStack {
-                if (!splashScreen) {
+        NavigationStack {
+            VStack(spacing: 0) {
+                ZStack {
                     switch selectedTab {
-                    case "Home":
+                    case .home:
                         homeView(accountModel: self.accountModel)
                             .environmentObject(alertViewModel)
-                    case "Account":
-                        if accountModel.isLoggedIn {
-                            accountView(accountModel: self.accountModel).environmentObject(alertViewModel)
-                        }
-                        else {
-                            loginView(accountModel: self.accountModel).environmentObject(alertViewModel)
-                        }
-                    default:
-                        Text("")
-                    }
-                }
-                else {
-                    VStack {
-                        Spacer()
-                        Image("nodeLogoYellow")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100)
                         
-                        Text("node")
-                            .font(.largeTitle.weight(.light))
-                        Spacer()
+                    case .casino:
+                        Text("Casino View")
+                            .foregroundColor(.white)
+                    case .bets:
+                        Text("Bets View")
+                            .foregroundColor(.white)
+                    case .sports:
+                        Text("Sports View")
+                            .foregroundColor(.white)
+                    case .chat:
+                        Text("Chat View")
+                            .foregroundColor(.white)
                     }
-                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color("deepBlack").edgesIgnoringSafeArea(.all))
+                
+                navbarView(selectedTab: $selectedTab)
             }
-            .background(.deepBlack)
-            .overlay(alignment: .bottom) {
-                navBar
-                    .opacity(!splashScreen ? 1 : 0)
-            }
-            .ignoresSafeArea(.keyboard)
-    //        .toast(isPresenting: $alertViewModel.show, duration: 0) { // offsetY 11
-    //            alertViewModel.alertToast
-    //        }
         }
+        .toast(isPresenting: $alertViewModel.show, duration: 3, offsetY: 9) {
+            alertViewModel.alertToast
+        }
+        .tint(.white)
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                withAnimation {
-                    self.splashScreen = false
-                }
-            }
-            
 //            var appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
 //            appleId = "001188.d2291cda8c794c92b3638ae3fc829cf4.0132"
 //            if (appleId != nil) {
-//                accountModel.authenticateUser(authToken: "", appleId: appleId!, fullName: "", email: "")
-//                selectedTab = "Messages"
+//                accountModel.appleAuthenticationLogin(authToken: "", appleId: appleId!, fullName: "", email: "")
 //            }
-//            else {
-//                selectedTab = "Account"
-//            }
-        }
-    }
-    
-    @ViewBuilder private var navBar: some View {
-        VStack(spacing: 0) {
-            Divider()
-            HStack(spacing: 10) {
-                ForEach(NavBarEntrys) { navEntry in
-                    VStack(spacing: 4) {
-                        Image(navEntry.symbolName)
-                            .imageScale(.large)
-                            .frame(height: 25)
-                            .clipped()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                    .frame(height: 50)
-                    .clipped()
-                    .foregroundStyle(selectedTab == navEntry.title ? .white : .deepCharcoal)
-                    .onTapGesture {
-                        selectedTab = navEntry.title
-                    }
-                }
-            }
-            .padding(.horizontal, 15)
-            .padding(.top, 10)
-        }
-        .background {
-            Rectangle()
-                .fill(.clear)
-                .background(.regularMaterial)
         }
     }
 }
@@ -119,20 +66,6 @@ struct ContentView: View {
         Spacer()
     }
 }
-
-struct NavBarEntry: Identifiable {
-    var title: String
-    var symbolName: String
-    
-    var id: String {
-        self.title
-    }
-}
-
-let NavBarEntrys: [NavBarEntry] = [
-    NavBarEntry(title: "Home", symbolName: "slotsIcon"),
-    NavBarEntry(title: "Account", symbolName: "person"),
-]
 
 class AlertViewModel: ObservableObject{
     @Published var show = false
