@@ -44,16 +44,25 @@ struct ContentView: View {
                 navbarView(selectedTab: $selectedTab)
             }
         }
-        .toast(isPresenting: $alertViewModel.show, duration: 3, offsetY: 9) {
+        .toast(isPresenting: $alertViewModel.show, duration: 3, offsetY: 11) {
             alertViewModel.alertToast
         }
         .tint(.white)
         .onAppear {
-//            var appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
-//            appleId = "001188.d2291cda8c794c92b3638ae3fc829cf4.0132"
-//            if (appleId != nil) {
-//                accountModel.appleAuthenticationLogin(authToken: "", appleId: appleId!, fullName: "", email: "")
-//            }
+            let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
+            let password: String? = KeychainWrapper.standard.string(forKey: "password")
+            let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
+            
+            if (appleId != nil) {
+                accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
+                    
+                })
+            }
+            else if (password != nil && phoneNumber != nil) {
+                accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
+                    
+                })
+            }
         }
     }
 }
@@ -69,7 +78,7 @@ struct ContentView: View {
 
 class AlertViewModel: ObservableObject{
     @Published var show = false
-    @Published var alertToast = AlertToast(type: .regular, title: "SOME TITLE"){
+    @Published var alertToast = AlertToast(displayMode: .hud, type: .regular, title: "SOME TITLE"){
         didSet{
             show.toggle()
         }

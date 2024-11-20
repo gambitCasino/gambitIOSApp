@@ -47,7 +47,7 @@ struct accountView: View {
             
             Spacer()
             
-            Text("Hi, \(accountModel.account.fullName.components(separatedBy: " ")[0])")
+            Text("Hi, \(accountModel.account.username)")
                 .font(.title3.weight(.regular))
         }
     }

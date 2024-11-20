@@ -18,7 +18,7 @@ class Account: ObservableObject {
     }
     
     @MainActor
-    func appleAuthenticationLogin(authToken: String, appleId: String, fullName: String, email: String) {
+    func appleAuthenticationLogin(appleId: String, authToken: String="", fullName: String="", email: String="", completion: @escaping ((code: String, message: String)?) -> Void) {
         Request {
             Url(serverIp+"/appleAuth")
             Method(.post)
@@ -33,13 +33,23 @@ class Account: ObservableObject {
                 let decodedAccount = try decoder.decode(AccountModel.self, from: data)
                 DispatchQueue.main.async {
                     self.account = decodedAccount
+                    completion(nil)
                 }
             } catch {
-                print(error)
+                print("Decoding error:", error)
+                DispatchQueue.main.async {
+                    completion(("DECODE_ERROR", "Network error, Try again later."))
+                }
             }
         }
         .onError { error in
-            
+            if let requestError = error as? RequestError {
+                let (errorCode, errorMsg) = getRequestError(requestError)
+                completion((errorCode, errorMsg))
+            }
+            else {
+                completion(("UNKOWN", "Network error, Try again later."))
+            }
         }
         .call()
     }
@@ -48,15 +58,13 @@ class Account: ObservableObject {
     func phoneAuthenticaionLogin(
         phoneNumber: String,
         password: String,
-        firstName: String = "",
-        lastName: String = "",
+        username: String = "",
         completion: @escaping ((code: String, message: String)?) -> Void
     ) {
         let parameters = [
             "phoneNumber": phoneNumber,
             "password": password,
-            "firstName": firstName,
-            "lastName": lastName
+            "username": username,
         ]
 
         Request {
@@ -85,7 +93,7 @@ class Account: ObservableObject {
         }
         .onError { error in
             if let requestError = error as? RequestError {
-                let (errorCode, errorMsg) = self.getRequestError(requestError)
+                let (errorCode, errorMsg) = getRequestError(requestError)
                 completion((errorCode, errorMsg))
             }
             else {
@@ -111,19 +119,6 @@ class Account: ObservableObject {
             }
         } catch {
             print(error)
-        }
-    }
-    
-    func getRequestError(_ error: RequestError) -> (code: String, message: String) {
-        if let responseData = error.error {
-            do {
-                let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: responseData)
-                return (code: errorResponse.code, message: errorResponse.message)
-            } catch {
-                return (code: "FAILED_TO_DECODE", message: "An unknown error occurred, try again later")
-            }
-        } else {
-            return (code: "FAILED_TO_DECODE", message: "An unknown error occurred, try again later")
         }
     }
 }

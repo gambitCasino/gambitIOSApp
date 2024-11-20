@@ -34,3 +34,11 @@ func convertToDate(dateSent: String, timeSent: String) -> Date? {
     
     return calendar.date(from: dateComponents)
 }
+
+extension Date {
+    static func fromISOString(_ isoString: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds] // Matches JS `toISOString()`
+        return formatter.date(from: isoString)
+    }
+}

@@ -18,8 +18,7 @@ struct loginMethodsView: View {
     
     @Environment(\.dismiss) private var dismiss
 
-    @State private var firstName: String = ""
-    @State private var lastName: String = ""
+    @State private var username: String = ""
     @State private var phoneNumber: String = ""
     @State private var password: String = ""
     
@@ -93,12 +92,10 @@ struct loginMethodsView: View {
             } onCompletion: { result in
                 switch result {
                 case .success(let authResult):
-                    handleSuccessfullSignin(with: authResult)
-                    if self.accountModel.isLoggedIn {
-                        dismiss()
-                    }
+                    handleAppleAuth(with: authResult)
                 case .failure(let error):
-                    handleLoginError(with: error)
+                    handleAppleError(with: error)
+                    handlePostLogin(error: (code: "APPLE_AUTH_ERROR", message: "Apple authenticaion error, try again later"))
                 }
             }
             .signInWithAppleButtonStyle(.white)
@@ -153,12 +150,10 @@ struct loginMethodsView: View {
             } onCompletion: { result in
                 switch result {
                 case .success(let authResult):
-                    handleSuccessfullSignin(with: authResult)
-                    if self.accountModel.isLoggedIn {
-                        dismiss()
-                    }
+                    handleAppleAuth(with: authResult)
                 case .failure(let error):
-                    handleLoginError(with: error)
+                    handleAppleError(with: error)
+//                    handlePostLogin(error: (code: "APPLE_AUTH_ERROR", message: "Apple authenticaion error, try again later"))
                 }
             }
             .signInWithAppleButtonStyle(.white)
@@ -174,29 +169,18 @@ struct loginMethodsView: View {
                 Text("Phone Sign Up")
                     .font(.title.bold())
                 
-                Text("Enter your details to create your account")
+                Text("Enter details to create your account")
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }
             
-            HStack(spacing: 15) {
-                TextField("First Name", text: $firstName)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.duskGreen, lineWidth: 2)
-                    )
-                
-                TextField("Last Name", text: $lastName)
-                    .padding()
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.duskGreen, lineWidth: 2)
-                    )
-            }
-            .frame(maxWidth: .infinity) // Ensure fields stretch evenly
+            TextField("Username", text: $username)
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.duskGreen, lineWidth: 2)
+                )
             
             TextField("Phone Number", text: $phoneNumber)
                 .keyboardType(.phonePad)
@@ -207,7 +191,6 @@ struct loginMethodsView: View {
                         .stroke(Color.duskGreen, lineWidth: 2)
                 )
             
-            // Password Entry Field
             SecureField("Password", text: $password)
                 .padding()
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
@@ -217,12 +200,8 @@ struct loginMethodsView: View {
                 )
             
             Button(action: {
-                accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password) { error in
-                    if let (_, errorMsg) = error {
-                        alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
-                    } else if self.accountModel.isLoggedIn {
-                        dismiss()
-                    }
+                accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password, username: self.username) { error in
+                    handlePostLogin(error: error)
                 }
             }) {
                 Text("Continue")
@@ -271,7 +250,7 @@ struct loginMethodsView: View {
                         .stroke(Color.duskGreen, lineWidth: 2)
                 )
             
-            TextField("Password", text: self.$password)
+            SecureField("Password", text: self.$password)
                 .padding()
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
                 .overlay(
@@ -281,11 +260,7 @@ struct loginMethodsView: View {
             
             Button(action: {
                 accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password) { error in
-                    if let (_, errorMsg) = error {
-                        alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
-                    } else if self.accountModel.isLoggedIn {
-                        dismiss()
-                    }
+                    handlePostLogin(error: error)
                 }
             }) {
                 Text("Continue")
@@ -314,20 +289,35 @@ struct loginMethodsView: View {
         .background(RoundedRectangle(cornerRadius: 10).fill(Color.deepCharcoal))
     }
     
-    private func handleSuccessfullSignin(with authorization: ASAuthorization) {
+    private func handleAppleAuth(with authorization: ASAuthorization) {
         guard let credentials = authorization.credential as? ASAuthorizationAppleIDCredential,
               let identityToken = credentials.identityToken,
               let identityTokenString = String(data: identityToken, encoding: .utf8) else { return }
                 
-        withAnimation(.easeIn) {
-            accountModel.appleAuthenticationLogin(authToken: identityTokenString, appleId: credentials.user, fullName: (credentials.fullName?.formatted())!, email: credentials.email ?? "")
+        accountModel.appleAuthenticationLogin(appleId: credentials.user, authToken: identityTokenString, fullName: (credentials.fullName?.formatted())!, email: credentials.email ?? "") { error in
+            handlePostLogin(error: error)
         }
-         
-        KeychainWrapper.standard.set(credentials.user, forKey: "appleId")
     }
         
-    private func handleLoginError(with error: Error) {
+    private func handleAppleError(with error: Error) {
         print("Could not authenticate: \(error.localizedDescription)")
+    }
+    
+    public func handlePostLogin(error: ((code: String, message: String)?)) {
+        if let (_, errorMsg) = error {
+            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
+        } else if self.accountModel.isLoggedIn {
+            dismiss()
+            
+            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .complete(.brightGreen), title: "Welcome back!")
+            
+            KeychainWrapper.standard.set(self.password, forKey: "password")
+            KeychainWrapper.standard.set(self.accountModel.account.appleId, forKey: "appleId")
+            KeychainWrapper.standard.set(self.accountModel.account.phoneNumber, forKey: "phoneNumber")
+        }
+        else {
+            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: "An unkown error occurred, try again later.")
+        }
     }
 }
 

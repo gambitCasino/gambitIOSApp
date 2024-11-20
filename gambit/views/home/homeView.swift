@@ -80,7 +80,7 @@ struct homeView: View {
     @ViewBuilder private var profileDisplay: some View {
         VStack {
             HStack {
-                Text("LandikBK")
+                Text(accountModel.account.username)
                     .font(.title2.weight(.bold))
                 
                 Spacer()
@@ -148,9 +148,9 @@ struct homeView: View {
                     }
             }
             .buttonStyle(.plain)
-            .onAppear {
-                self.navigateToSignIn = true
-            }
+//            .onAppear {
+//                self.navigateToSignIn = true
+//            }
             
             NavigationLink(destination: loginView(accountModel: self.accountModel, loginType: .SignUp).environmentObject(alertViewModel), isActive: self.$navigateToSignUp) {
                 
