@@ -44,26 +44,26 @@ struct ContentView: View {
                 navbarView(selectedTab: $selectedTab)
             }
         }
-        .toast(isPresenting: $alertViewModel.show, duration: 3, offsetY: 11) {
+        .toast(isPresenting: $alertViewModel.show, duration: 2, offsetY: 11) {
             alertViewModel.alertToast
         }
         .tint(.white)
-        .onAppear {
-            let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
-            let password: String? = KeychainWrapper.standard.string(forKey: "password")
-            let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
-            
-            if (appleId != nil) {
-                accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
-                    
-                })
-            }
-            else if (password != nil && phoneNumber != nil) {
-                accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
-                    
-                })
-            }
-        }
+//        .onAppear {
+//            let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
+//            let password: String? = KeychainWrapper.standard.string(forKey: "password")
+//            let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
+//            
+//            if (appleId != nil) {
+//                accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
+//                    
+//                })
+//            }
+//            else if (password != nil && phoneNumber != nil) {
+//                accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
+//                    
+//                })
+//            }
+//        }
     }
 }
 
@@ -76,11 +76,19 @@ struct ContentView: View {
     }
 }
 
-class AlertViewModel: ObservableObject{
+class AlertViewModel: ObservableObject {
     @Published var show = false
-    @Published var alertToast = AlertToast(displayMode: .hud, type: .regular, title: "SOME TITLE"){
-        didSet{
-            show.toggle()
+    @Published var alertToast = AlertToast(displayMode: .hud, type: .regular, title: "SOME TITLE")
+
+    func presentToast(toast: AlertToast) {
+        DispatchQueue.main.async {
+            self.alertToast = toast
+            self.show = true
+        }
+
+        // Optionally reset `show` after the toast duration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            self.show = false
         }
     }
 }

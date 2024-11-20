@@ -175,6 +175,7 @@ struct loginMethodsView: View {
             }
             
             TextField("Username", text: $username)
+                .autocorrectionDisabled()
                 .padding()
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
                 .overlay(
@@ -192,6 +193,7 @@ struct loginMethodsView: View {
                 )
             
             SecureField("Password", text: $password)
+                .autocorrectionDisabled()
                 .padding()
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
                 .overlay(
@@ -251,6 +253,7 @@ struct loginMethodsView: View {
                 )
             
             SecureField("Password", text: self.$password)
+                .autocorrectionDisabled()
                 .padding()
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.2)))
                 .overlay(
@@ -305,11 +308,15 @@ struct loginMethodsView: View {
     
     public func handlePostLogin(error: ((code: String, message: String)?)) {
         if let (_, errorMsg) = error {
-            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
+//            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
+            
+            alertViewModel.presentToast(
+                toast: AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
+            )
         } else if self.accountModel.isLoggedIn {
             dismiss()
             
-            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .complete(.brightGreen), title: "Welcome back!")
+            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .complete(.brightGreen), title: self.username.isEmpty ? "Welcome back!" : "Account created!")
             
             KeychainWrapper.standard.set(self.password, forKey: "password")
             KeychainWrapper.standard.set(self.accountModel.account.appleId, forKey: "appleId")

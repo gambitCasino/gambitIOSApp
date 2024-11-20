@@ -25,7 +25,7 @@ struct homeView: View {
             .frame(maxHeight: 55)
             .shadow(color: Color(.sRGBLinear, red: 0/255, green: 0/255, blue: 0/255).opacity(0.12), radius: 8, x: 0, y: 4)
             
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 profileDisplay
 
                 casinoHomePage
@@ -52,7 +52,8 @@ struct homeView: View {
                 
                 if accountModel.isLoggedIn {
                     HStack(spacing: 5) {
-                        Text("100")
+                        Text("\(Int(self.accountModel.account.bits))")
+
                             .font(.title2.weight(.bold))
                         
                         Text("bits")
@@ -73,48 +74,45 @@ struct homeView: View {
         .onAppear {
         }
     }
-
-    @State private var navigateToSignIn = false
-    @State private var navigateToSignUp = false
     
     @ViewBuilder private var profileDisplay: some View {
         VStack {
             HStack {
-                Text(accountModel.account.username)
+                Text(accountModel.isLoggedIn ? accountModel.account.username : "please login")
                     .font(.title2.weight(.bold))
                 
                 Spacer()
                 
-                Image(systemName: "star")
-                    .opacity(0.3)
+                Image(systemName: "star.fill")
+                    .foregroundStyle(self.accountModel.account.vipLevel.color)
                     .imageScale(.large)
             }
-            .padding(.bottom, 25)
+            .padding(.bottom, 15)
 
             VStack {
                 HStack(alignment: .top) {
                     Text("Your VIP Progress")
                     Spacer()
-                    Text("60%")
+                    Text("\(String(format: "%.0f", self.accountModel.account.vipProgress * 100))%")
                 }
                 
-                LinearProgressView(value: 0.6, shape: RoundedRectangle(cornerRadius: 6))
+                LinearProgressView(value: self.accountModel.account.vipProgress, shape: RoundedRectangle(cornerRadius: 6))
                     .tint(LinearGradient(colors: [.green, .softMint], startPoint: .leading, endPoint: .trailing))
                     .frame(height: 16)
                 
                 HStack {
                     HStack(spacing: 3) {
                         Image(systemName: "star")
-                            .foregroundStyle(.gray)
-                        Text("None")
+                            .foregroundStyle(self.accountModel.account.vipLevel.color)
+                        Text("\(self.accountModel.account.vipLevel.displayName)")
                     }
                     
                     Spacer()
                                         
                     HStack(spacing: 3) {
                         Image(systemName: "star")
-                            .foregroundStyle(.brown)
-                        Text("Bronze")
+                            .foregroundStyle(self.accountModel.account.vipLevel.nextLevelColor)
+                        Text("\(self.accountModel.account.vipLevel.nextLevel)")
                     }
                 }
                 .foregroundStyle(.gray)
@@ -136,7 +134,7 @@ struct homeView: View {
     @ViewBuilder
     private var loginTypeButtons: some View {
         HStack {
-            NavigationLink(destination: loginView(accountModel: self.accountModel, loginType: .SignIn).environmentObject(alertViewModel), isActive: self.$navigateToSignIn) {
+            NavigationLink(destination: loginView(accountModel: self.accountModel, loginType: .SignIn).environmentObject(alertViewModel)) {
                 
                 Text("Sign in")
                     .font(.headline.bold())
@@ -148,11 +146,8 @@ struct homeView: View {
                     }
             }
             .buttonStyle(.plain)
-//            .onAppear {
-//                self.navigateToSignIn = true
-//            }
             
-            NavigationLink(destination: loginView(accountModel: self.accountModel, loginType: .SignUp).environmentObject(alertViewModel), isActive: self.$navigateToSignUp) {
+            NavigationLink(destination: loginView(accountModel: self.accountModel, loginType: .SignUp).environmentObject(alertViewModel)) {
                 
                 Text("Sign up")
                     .font(.headline.bold())
@@ -164,9 +159,6 @@ struct homeView: View {
                     }
             }
             .buttonStyle(.plain)
-//            .onAppear {
-//                self.navigateToSignUp = true
-//            }
         }
     }
     
@@ -236,6 +228,8 @@ struct homeView: View {
                 .padding(.vertical, 7)
                 .background(RoundedCorners(color: .duskGreen, tl: 12, tr: 12, bl: 12, br: 12))
             }
+            
+            gamesHomeView(accountModel: self.accountModel)
             
             HStack {
                 VStack(spacing: 0) {

@@ -26,9 +26,6 @@ struct accountView: View {
                         
             Spacer()
         }
-        .toast(isPresenting: $alertViewModel.show, duration: 0) { // offsetY 11
-            alertViewModel.alertToast
-        }
         .padding([.horizontal, .top])
         .frame(maxWidth: .infinity)
     }
