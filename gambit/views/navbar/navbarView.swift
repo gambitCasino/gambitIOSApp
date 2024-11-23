@@ -13,19 +13,33 @@ struct navbarView: View {
     var body: some View {
         HStack {
             Spacer()
+
             TabBarButton(
-                icon: "magnifyingglass",
+                icon: "suit.club.fill",
                 text: "Home",
                 isSelected: selectedTab == .home,
                 action: { selectedTab = .home }
             )
             
+            Spacer()
+
             TabBarButton(
-                icon: "suit.club.fill",
-                text: "Casino",
-                isSelected: selectedTab == .casino,
-                action: { selectedTab = .casino }
+                icon: "star.fill",
+                text: "Vip",
+                isSelected: selectedTab == .vip,
+                action: { selectedTab = .vip }
             )
+            
+            Spacer()
+
+            TabBarButton(
+                icon: "bubble.left.and.bubble.right.fill",
+                text: "Chat",
+                isSelected: selectedTab == .chat,
+                action: { selectedTab = .chat }
+            )
+            
+            Spacer()
             
             TabBarButton(
                 icon: "rectangle.grid.2x2.fill",
@@ -34,18 +48,13 @@ struct navbarView: View {
                 action: { selectedTab = .bets }
             )
             
+            Spacer()
+
             TabBarButton(
                 icon: "sportscourt",
                 text: "Sports",
                 isSelected: selectedTab == .sports,
                 action: { selectedTab = .sports }
-            )
-            
-            TabBarButton(
-                icon: "bubble.left.and.bubble.right.fill",
-                text: "Chat",
-                isSelected: selectedTab == .chat,
-                action: { selectedTab = .chat }
             )
             
             Spacer()
@@ -80,7 +89,7 @@ struct TabBarButton: View {
 
 enum Tab: String {
     case home
-    case casino
+    case vip
     case bets
     case sports
     case chat

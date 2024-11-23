@@ -14,11 +14,13 @@ struct AccountModel: Codable {
     var username: String = ""
     var email: String = ""
     var phoneNumber: String = ""
-    var vipLevel: VIPLevel = .bronze
+    var vipLevel: VIPLevel = .none
     var vipProgress: Double = 0.0
     var bits: Double = 0.0
     var createdAt: Date = Date()
     var isVerified: Bool = false
+    var clientSeed: String = ""
+    var hashedServerSeed: String = ""
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -40,6 +42,8 @@ struct AccountModel: Codable {
         }
         
         self.isVerified = try container.decodeIfPresent(Bool.self, forKey: .isVerified) ?? false
+        self.clientSeed = try container.decodeIfPresent(String.self, forKey: .clientSeed) ?? ""
+        self.hashedServerSeed = try container.decodeIfPresent(String.self, forKey: .hashedServerSeed) ?? ""
     }
     
     init() {}
@@ -55,10 +59,12 @@ struct AccountModel: Codable {
         case bits
         case createdAt
         case isVerified
+        case clientSeed
+        case hashedServerSeed
     }
     
     enum VIPLevel: Int, Codable {
-        case none = 1
+        case none = 0
         case bronze
         case silver
         case gold

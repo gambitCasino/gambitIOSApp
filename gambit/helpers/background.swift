@@ -8,7 +8,7 @@
 import SwiftUI
 
 
-struct BackgroundView: View {
+struct backgroundView: View {
     var body: some View {
         ZStack {
             // Base color

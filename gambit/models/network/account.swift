@@ -8,6 +8,7 @@
 import Foundation
 import Request
 import Json
+import SwiftKeychainWrapper
 
 @MainActor
 class Account: ObservableObject {
@@ -61,8 +62,14 @@ class Account: ObservableObject {
         username: String = "",
         completion: @escaping ((code: String, message: String)?) -> Void
     ) {
+        var strippedPhone = phoneNumber
+        strippedPhone.replace("-", with: "")
+        strippedPhone.replace("(", with: "")
+        strippedPhone.replace(")", with: "")
+        strippedPhone.replace(" ", with: "")
+        
         let parameters = [
-            "phoneNumber": phoneNumber,
+            "phoneNumber": strippedPhone,
             "password": password,
             "username": username,
         ]
@@ -104,21 +111,58 @@ class Account: ObservableObject {
     }
 
     @MainActor
-    func updateUser() {
-        let url = URL(string: serverIp+"/updateUser")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        do {
-            let jsonData = try JSONEncoder().encode(self.account)
-            request.httpBody = jsonData
-            
-            Task {
-                let (_, _) = try await URLSession.shared.data(for: request)
-            }
-        } catch {
-            print(error)
+    func setClientSeed(
+        userId: String,
+        clientSeed: String,
+        completion: @escaping ((code: String, message: String)?) -> Void
+    ) {
+        let parameters = [
+            "userId": userId,
+            "clientSeed": clientSeed,
+        ]
+
+        Request {
+            Url(serverIp + "/setClientSeed")
+            Method(.post)
+            Header.Accept(.json)
+            Header.ContentType(.json)
+            Body(parameters)
         }
+        .onData { data in
+            do {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                
+                let decodedAccount = try decoder.decode(AccountModel.self, from: data)
+                DispatchQueue.main.async {
+                    self.account = decodedAccount
+                    completion(nil)
+                }
+            } catch {
+                print("Decoding error:", error)
+                DispatchQueue.main.async {
+                    completion(("DECODE_ERROR", "Network error, Try again later."))
+                }
+            }
+        }
+        .onError { error in
+            if let requestError = error as? RequestError {
+                let (errorCode, errorMsg) = getRequestError(requestError)
+                completion((errorCode, errorMsg))
+            }
+            else {
+                completion(("UNKOWN", "Network error, Try again later."))
+            }
+        }
+        .call()
+    }
+    
+    @MainActor
+    func logOut() {
+        self.account = AccountModel()
+        
+        KeychainWrapper.standard.remove(forKey: "appleId")
+        KeychainWrapper.standard.remove(forKey: "password")
+        KeychainWrapper.standard.remove(forKey: "phoneNumber")
     }
 }

@@ -21,7 +21,6 @@ struct homeView: View {
                 header
                     .padding(.horizontal, 17)
             }
-            
             .frame(maxHeight: 55)
             .shadow(color: Color(.sRGBLinear, red: 0/255, green: 0/255, blue: 0/255).opacity(0.12), radius: 8, x: 0, y: 4)
             
@@ -37,7 +36,7 @@ struct homeView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
-            BackgroundView()
+            backgroundView()
         }
     }
     
@@ -71,16 +70,24 @@ struct homeView: View {
                 }
             }
         }
-        .onAppear {
-        }
     }
     
     @ViewBuilder private var profileDisplay: some View {
         VStack {
             HStack {
-                Text(accountModel.isLoggedIn ? accountModel.account.username : "please login")
-                    .font(.title2.weight(.bold))
-                
+                HStack(alignment: .lastTextBaseline, spacing: 25) {
+                    Text(accountModel.isLoggedIn ? accountModel.account.username : "please login")
+                        .font(.title2.weight(.bold))
+                    
+                    if accountModel.isLoggedIn {
+                        Text("log out")
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(.red)
+                            .onTapGesture {
+                                self.accountModel.logOut()
+                            }
+                    }
+                }
                 Spacer()
                 
                 Image(systemName: "star.fill")
@@ -162,107 +169,27 @@ struct homeView: View {
         }
     }
     
+    
     @ViewBuilder private var casinoHomePage: some View {
         VStack(spacing: 13) {
-            HStack {
-                VStack(spacing: 0) {
-                    Image("exploreCasino")
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 11,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 11
-                            )
-                        )
-                    
-                    HStack(spacing: 10) {
-                        Image(systemName: "dice.fill")
-                            .rotationEffect(.degrees(-15))
-                        Text("Casino")
-                            .font(.title3.weight(.medium))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(RoundedCorners(color: .duskGreen, tl: 0, tr: 0, bl: 12, br: 12))
-                }
-                
-                VStack(spacing: 0) {
-                    Image("exploreSportsBook")
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(
-                            .rect(
-                                topLeadingRadius: 11,
-                                bottomLeadingRadius: 0,
-                                bottomTrailingRadius: 0,
-                                topTrailingRadius: 11
-                            )
-                        )
-                    
-                    HStack(spacing: 9) {
-                        Image(systemName: "basketball.fill")
-                            .rotationEffect(.degrees(-15))
-                        Text("Sportsbook")
-                            .font(.title3.weight(.medium))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(RoundedCorners(color: .duskGreen, tl: 0, tr: 0, bl: 12, br: 12))
-                }
-            }
+            GameGrid(items: [
+                (title: "Slots", imageName: "exploreCasino", iconName: "slotsIcon", iconRotation: 0, backgroundColor: .duskGreen, destination: nil),
+                (title: "Sportsbook", imageName: "exploreSportsBook", iconName: "basketball.fill", iconRotation: -15, backgroundColor: .duskGreen, destination: nil)
+            ])
             
-            VStack(spacing: 0) {
-                HStack(spacing: 9) {
-                    Image(systemName: "flame.fill")
-                        .rotationEffect(.degrees(-15))
-                    Text("Gambit Originals")
-                        .font(.title3.weight(.medium))
-                    Spacer()
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(RoundedCorners(color: .duskGreen, tl: 12, tr: 12, bl: 12, br: 12))
-            }
-            
-            gamesHomeView(accountModel: self.accountModel)
-            
-            HStack {
-                VStack(spacing: 0) {
-                    HStack(spacing: 9) {
-                        Image("slotsIcon")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 22, height: 22)
-                            .foregroundStyle(.white)
-        
-                        Text("Slots")
-                            .font(.title3.weight(.medium))
-                        Spacer()
-                        
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(RoundedCorners(color: .duskGreen, tl: 12, tr: 12, bl: 12, br: 12))
-                }
-                
-                VStack(spacing: 0) {
-                    HStack(spacing: 9) {
-                        Image(systemName: "flame.fill")
-                            .rotationEffect(.degrees(-15))
-                        Text("Live Casino")
-                            .font(.title3.weight(.medium))
-                        Spacer()
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(RoundedCorners(color: .duskGreen, tl: 12, tr: 12, bl: 12, br: 12))
-                }
-            }
+            GameCard(
+                title: "Gambit Originals",
+                iconName: "flame.fill",
+                backgroundColor: .duskGreen
+            )
+
+            GameGrid(items: [
+                (title: "Crash", imageName: "crash", iconName: nil, iconRotation: 0, backgroundColor: .duskGreen, destination: AnyView(crashView())),
+                (title: "Dice", imageName: "dice", iconName: nil, iconRotation: 0, backgroundColor: .duskGreen, destination: AnyView(diceView())),
+                (title: "Plinko", imageName: "plinko", iconName: nil, iconRotation: 0, backgroundColor: .duskGreen, destination: AnyView(plinkoView(accountModel: self.accountModel)
+                    .environmentObject(alertViewModel))),
+                (title: "Mines", imageName: "mines", iconName: nil, iconRotation: 0, backgroundColor: .duskGreen, destination: AnyView(minesView())),
+            ])
         }
     }
 }

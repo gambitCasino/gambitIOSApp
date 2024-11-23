@@ -23,9 +23,8 @@ struct ContentView: View {
                     case .home:
                         homeView(accountModel: self.accountModel)
                             .environmentObject(alertViewModel)
-                        
-                    case .casino:
-                        Text("Casino View")
+                    case .vip:
+                        Text("Vip View")
                             .foregroundColor(.white)
                     case .bets:
                         Text("Bets View")
@@ -48,22 +47,22 @@ struct ContentView: View {
             alertViewModel.alertToast
         }
         .tint(.white)
-//        .onAppear {
-//            let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
-//            let password: String? = KeychainWrapper.standard.string(forKey: "password")
-//            let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
-//            
-//            if (appleId != nil) {
-//                accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
-//                    
-//                })
-//            }
-//            else if (password != nil && phoneNumber != nil) {
-//                accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
-//                    
-//                })
-//            }
-//        }
+        .onAppear {
+            let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
+            let password: String? = KeychainWrapper.standard.string(forKey: "password")
+            let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
+            
+            if (appleId != nil) {
+                accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
+                    
+                })
+            }
+            else if (password != nil && phoneNumber != nil) {
+                accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
+                    
+                })
+            }
+        }
     }
 }
 

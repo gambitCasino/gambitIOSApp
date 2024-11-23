@@ -7,12 +7,8 @@
 
 import SwiftUI
 
-struct crashView: View {
+struct diceView: View {
     var body: some View {
         Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
     }
-}
-
-#Preview {
-    crashView()
 }

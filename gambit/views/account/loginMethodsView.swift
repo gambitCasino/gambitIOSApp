@@ -153,7 +153,6 @@ struct loginMethodsView: View {
                     handleAppleAuth(with: authResult)
                 case .failure(let error):
                     handleAppleError(with: error)
-//                    handlePostLogin(error: (code: "APPLE_AUTH_ERROR", message: "Apple authenticaion error, try again later"))
                 }
             }
             .signInWithAppleButtonStyle(.white)
@@ -191,6 +190,11 @@ struct loginMethodsView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.duskGreen, lineWidth: 2)
                 )
+                .onChange(of: phoneNumber) {
+                    if !phoneNumber.isEmpty {
+                       phoneNumber = phoneNumber.formatPhoneNumber()
+                    }
+                }
             
             SecureField("Password", text: $password)
                 .autocorrectionDisabled()
@@ -202,8 +206,25 @@ struct loginMethodsView: View {
                 )
             
             Button(action: {
-                accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password, username: self.username) { error in
-                    handlePostLogin(error: error)
+                if self.phoneNumber.count != 14 {
+                    alertViewModel.presentToast(
+                        toast: AlertToast(displayMode: .hud, type: .error(.red), title: "Invalid phone number")
+                    )
+                }
+                else if self.username.count < 2 {
+                    alertViewModel.presentToast(
+                        toast: AlertToast(displayMode: .hud, type: .error(.red), title: "Invalid username")
+                    )
+                }
+                else if self.password.count < 3 {
+                    alertViewModel.presentToast(
+                        toast: AlertToast(displayMode: .hud, type: .error(.red), title: "Invalid password")
+                    )
+                }
+                else {
+                    accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password, username: self.username) { error in
+                        handlePostLogin(error: error)
+                    }
                 }
             }) {
                 Text("Continue")
@@ -251,6 +272,11 @@ struct loginMethodsView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color.duskGreen, lineWidth: 2)
                 )
+                .onChange(of: phoneNumber) {
+                    if !phoneNumber.isEmpty {
+                       phoneNumber = phoneNumber.formatPhoneNumber()
+                    }
+                }
             
             SecureField("Password", text: self.$password)
                 .autocorrectionDisabled()
@@ -262,8 +288,20 @@ struct loginMethodsView: View {
                 )
             
             Button(action: {
-                accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password) { error in
-                    handlePostLogin(error: error)
+                if self.phoneNumber.count != 14 {
+                    alertViewModel.presentToast(
+                        toast: AlertToast(displayMode: .hud, type: .error(.red), title: "Invalid phone number")
+                    )
+                }
+                else if self.password.count < 3 {
+                    alertViewModel.presentToast(
+                        toast: AlertToast(displayMode: .hud, type: .error(.red), title: "Invalid password")
+                    )
+                }
+                else {
+                    accountModel.phoneAuthenticaionLogin(phoneNumber: self.phoneNumber, password: self.password) { error in
+                        handlePostLogin(error: error)
+                    }
                 }
             }) {
                 Text("Continue")
@@ -308,22 +346,30 @@ struct loginMethodsView: View {
     
     public func handlePostLogin(error: ((code: String, message: String)?)) {
         if let (_, errorMsg) = error {
-//            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
-            
             alertViewModel.presentToast(
                 toast: AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)
             )
         } else if self.accountModel.isLoggedIn {
-            dismiss()
-            
-            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .complete(.brightGreen), title: self.username.isEmpty ? "Welcome back!" : "Account created!")
-            
             KeychainWrapper.standard.set(self.password, forKey: "password")
             KeychainWrapper.standard.set(self.accountModel.account.appleId, forKey: "appleId")
             KeychainWrapper.standard.set(self.accountModel.account.phoneNumber, forKey: "phoneNumber")
+            
+            // signup state if username isnt empty (since signin user doesnt provide username)
+            if (!self.username.isEmpty) {
+                self.currentView = .postSignUp
+            }
+            else {
+                dismiss()
+                
+                alertViewModel.presentToast(
+                    toast: AlertToast(displayMode: .hud, type: .complete(.brightGreen), title: "Welcome")
+                )
+            }
         }
         else {
-            alertViewModel.alertToast = AlertToast(displayMode: .hud, type: .error(.red), title: "An unkown error occurred, try again later.")
+            alertViewModel.presentToast(
+                toast: AlertToast(displayMode: .hud, type: .error(.red), title: "An unkown error occurred, try again later.")
+            )
         }
     }
 }
@@ -332,4 +378,5 @@ enum LoginViewType {
     case defaultView
     case signUpWithPhone
     case signInWithPhone
+    case postSignUp
 }

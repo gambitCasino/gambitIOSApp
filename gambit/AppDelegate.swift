@@ -23,6 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Siren.shared.wail()
 
         return true
+        
     }
 }
 
