@@ -11,18 +11,18 @@ struct GameGrid: View {
     @State private var navigateToPlinko = false
     @State private var dontNav = false
     
-    let items: [(title: String, imageName: String?, iconName: String?, iconRotation: Double, backgroundColor: Color, destination: AnyView?)] // `destination` is optional now
+    let items: [(title: String, imageName: String?, iconName: String?, iconRotation: Double, backgroundColor: Color, destination: AnyView?)]
     
     let columns = [
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10)
     ]
-
+    
     var body: some View {
         LazyVGrid(columns: columns, spacing: 10) {
             ForEach(items, id: \.title) { item in
                 if let destination = item.destination {
-                    NavigationLink(destination: destination, isActive: item.title == "Plinko" ? $navigateToPlinko : $dontNav) {
+                    NavigationLink(destination: destination) {
                         GameCard(
                             title: item.title,
                             imageName: item.imageName,
@@ -46,7 +46,7 @@ struct GameGrid: View {
             }
         }
         .onAppear {
-            navigateToPlinko = false
+//            navigateToPlinko = true
         }
     }
 }

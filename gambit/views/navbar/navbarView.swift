@@ -49,15 +49,6 @@ struct navbarView: View {
             )
             
             Spacer()
-
-            TabBarButton(
-                icon: "sportscourt",
-                text: "Sports",
-                isSelected: selectedTab == .sports,
-                action: { selectedTab = .sports }
-            )
-            
-            Spacer()
         }
         .padding(.vertical, 10)
         .background(.lighterBlack)
@@ -91,6 +82,5 @@ enum Tab: String {
     case home
     case vip
     case bets
-    case sports
     case chat
 }

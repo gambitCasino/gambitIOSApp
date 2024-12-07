@@ -12,7 +12,7 @@ import SwiftKeychainWrapper
 
 struct accountView: View {
     @EnvironmentObject var alertViewModel: AlertViewModel
-    @ObservedObject var accountModel: Account
+    @ObservedObject var accountModel: AccountModel
     
     var body: some View {
         VStack {

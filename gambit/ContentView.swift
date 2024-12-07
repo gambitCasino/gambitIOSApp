@@ -13,7 +13,15 @@ import SVGView
 struct ContentView: View {
     @State private var selectedTab: Tab = .home
     @EnvironmentObject var alertViewModel: AlertViewModel
-    @StateObject private var accountModel: Account = Account()
+    @StateObject private var accountModel = AccountModel()
+    @StateObject private var betModel: BetModel
+    @State private var liveGameBalance: Double = 1.0
+
+    init() {
+        let accountModel = AccountModel()
+        _accountModel = StateObject(wrappedValue: accountModel)
+        _betModel = StateObject(wrappedValue: BetModel(accountModel: accountModel))
+    }
     
     var body: some View {
         NavigationStack {
@@ -21,16 +29,13 @@ struct ContentView: View {
                 ZStack {
                     switch selectedTab {
                     case .home:
-                        homeView(accountModel: self.accountModel)
+                        homeView(accountModel: self.accountModel, betModel: self.betModel, liveGameBalance: self.$liveGameBalance)
                             .environmentObject(alertViewModel)
                     case .vip:
-                        Text("Vip View")
-                            .foregroundColor(.white)
+                        vipView(accountModel: self.accountModel, betModel: self.betModel)
+                            .environmentObject(alertViewModel)
                     case .bets:
                         Text("Bets View")
-                            .foregroundColor(.white)
-                    case .sports:
-                        Text("Sports View")
                             .foregroundColor(.white)
                     case .chat:
                         Text("Chat View")
@@ -43,24 +48,34 @@ struct ContentView: View {
                 navbarView(selectedTab: $selectedTab)
             }
         }
+        .overlay(alignment: .top) {
+            if !self.accountModel.account.activeGame.isEmpty {
+                walletDisplayView(accountModel: self.accountModel, liveGameBalance: Binding<Double?>(
+                    get: { self.liveGameBalance }, // Convert Double to Double?
+                    set: { self.liveGameBalance = $0 ?? 0 } // Convert Double? back to Double with a fallback
+                ))
+            }
+        }
         .toast(isPresenting: $alertViewModel.show, duration: 2, offsetY: 11) {
             alertViewModel.alertToast
         }
         .tint(.white)
         .onAppear {
-            let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
-            let password: String? = KeychainWrapper.standard.string(forKey: "password")
-            let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
-            
-            if (appleId != nil) {
-                accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
-                    
-                })
-            }
-            else if (password != nil && phoneNumber != nil) {
-                accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
-                    
-                })
+            if (!self.accountModel.isLoggedIn) {
+                let appleId: String? = KeychainWrapper.standard.string(forKey: "appleId")
+                let password: String? = KeychainWrapper.standard.string(forKey: "password")
+                let phoneNumber: String? = KeychainWrapper.standard.string(forKey: "phoneNumber")
+                
+                if (appleId != nil && !appleId!.isEmpty) {
+                    accountModel.appleAuthenticationLogin(appleId: appleId!, completion: { error in
+                        
+                    })
+                }
+                else if (password != nil && phoneNumber != nil) {
+                    accountModel.phoneAuthenticaionLogin(phoneNumber: phoneNumber!, password: password!, completion: { error in
+                        
+                    })
+                }
             }
         }
     }

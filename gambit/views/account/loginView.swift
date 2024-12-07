@@ -12,7 +12,7 @@ import AlertToast
 
 struct loginView: View {
     @EnvironmentObject var alertViewModel: AlertViewModel
-    @ObservedObject var accountModel: Account
+    @ObservedObject var accountModel: AccountModel
     @State var loginType: LoginType
     @State var currentView: LoginViewType = .defaultView
     
@@ -124,7 +124,7 @@ struct loginView: View {
                 .fixedSize(horizontal: false, vertical: true)
             
             Button(action: {
-                self.accountModel.setClientSeed(userId: self.accountModel.account._id, clientSeed: self.clientSeed) { error in
+                self.accountModel.setClientSeed(clientSeed: self.clientSeed) { error in
                     if let (_, errorMsg) = error {
                         alertViewModel.presentToast(
                             toast: AlertToast(displayMode: .hud, type: .error(.red), title: errorMsg)

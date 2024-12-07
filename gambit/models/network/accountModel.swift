@@ -11,8 +11,8 @@ import Json
 import SwiftKeychainWrapper
 
 @MainActor
-class Account: ObservableObject {
-    @Published var account: AccountModel = AccountModel()
+class AccountModel: ObservableObject {
+    @Published var account: AccountSchema = AccountSchema()
     
     var isLoggedIn: Bool {
         return self.account._id != ""
@@ -31,7 +31,7 @@ class Account: ObservableObject {
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 
-                let decodedAccount = try decoder.decode(AccountModel.self, from: data)
+                let decodedAccount = try decoder.decode(AccountSchema.self, from: data)
                 DispatchQueue.main.async {
                     self.account = decodedAccount
                     completion(nil)
@@ -86,7 +86,7 @@ class Account: ObservableObject {
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 
-                let decodedAccount = try decoder.decode(AccountModel.self, from: data)
+                let decodedAccount = try decoder.decode(AccountSchema.self, from: data)
                 DispatchQueue.main.async {
                     self.account = decodedAccount
                     completion(nil)
@@ -112,12 +112,11 @@ class Account: ObservableObject {
 
     @MainActor
     func setClientSeed(
-        userId: String,
         clientSeed: String,
         completion: @escaping ((code: String, message: String)?) -> Void
     ) {
         let parameters = [
-            "userId": userId,
+            "userId": self.account._id,
             "clientSeed": clientSeed,
         ]
 
@@ -133,7 +132,51 @@ class Account: ObservableObject {
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
                 
-                let decodedAccount = try decoder.decode(AccountModel.self, from: data)
+                let decodedAccount = try decoder.decode(AccountSchema.self, from: data)
+                DispatchQueue.main.async {
+                    self.account = decodedAccount
+                    completion(nil)
+                }
+            } catch {
+                print("Decoding error:", error)
+                DispatchQueue.main.async {
+                    completion(("DECODE_ERROR", "Network error, Try again later."))
+                }
+            }
+        }
+        .onError { error in
+            if let requestError = error as? RequestError {
+                let (errorCode, errorMsg) = getRequestError(requestError)
+                completion((errorCode, errorMsg))
+            }
+            else {
+                completion(("UNKOWN", "Network error, Try again later."))
+            }
+        }
+        .call()
+    }
+    
+    @MainActor
+    func claimReload(
+        completion: @escaping ((code: String, message: String)?) -> Void
+    ) {
+        let parameters = [
+            "userId": self.account._id,
+        ]
+
+        Request {
+            Url(serverIp + "/claimReload")
+            Method(.post)
+            Header.Accept(.json)
+            Header.ContentType(.json)
+            Body(parameters)
+        }
+        .onData { data in
+            do {
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                
+                let decodedAccount = try decoder.decode(AccountSchema.self, from: data)
                 DispatchQueue.main.async {
                     self.account = decodedAccount
                     completion(nil)
@@ -159,7 +202,7 @@ class Account: ObservableObject {
     
     @MainActor
     func logOut() {
-        self.account = AccountModel()
+        self.account = AccountSchema()
         
         KeychainWrapper.standard.remove(forKey: "appleId")
         KeychainWrapper.standard.remove(forKey: "password")

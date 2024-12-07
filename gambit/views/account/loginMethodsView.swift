@@ -12,7 +12,7 @@ import AlertToast
 
 struct loginMethodsView: View {
     @EnvironmentObject var alertViewModel: AlertViewModel
-    @ObservedObject var accountModel: Account
+    @ObservedObject var accountModel: AccountModel
     @State var loginType: LoginType
     @Binding var currentView: LoginViewType
     

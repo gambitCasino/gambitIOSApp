@@ -13,6 +13,8 @@ struct RoundedCorners: View {
     var tr: CGFloat = 0.0
     var bl: CGFloat = 0.0
     var br: CGFloat = 0.0
+    var stroke: Color = .clear
+    var strokeWidth: CGFloat = 0.0
     
     var body: some View {
         GeometryReader { geometry in
@@ -39,6 +41,7 @@ struct RoundedCorners: View {
                 path.closeSubpath()
             }
             .fill(self.color)
+            .stroke(.duskGreen, lineWidth: strokeWidth)
         }
     }
 }

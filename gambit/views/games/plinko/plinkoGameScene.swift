@@ -9,13 +9,23 @@ import SwiftUI
 import SpriteKit
 
 class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
+    @Binding var liveGameBalance: Double
+
+    init(liveGameBalance: Binding<Double>, size: CGSize) {
+        self._liveGameBalance = liveGameBalance
+        super.init(size: size)
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     let heightPositioning = 0.70
     let ballDropHeight = 0.70 + 0.07
     
     let pinRows = 12
     var ballRecordings: [[String: Any]?] = []
     let multipliers: [Double] = [1000, 130, 26, 9, 4, 0.2, 0.2, 0.2, 4, 9, 26, 130, 1000]
-    let probabilities: [Double] = [0.001, 0.005, 0.01, 0.05, 0.15, 0.25, 0.25, 0.25, 0.15, 0.05, 0.01, 0.005, 0.001]
     let multiplierText: [Double: String] = [
         1000: "1K",
         130: "130",
@@ -61,7 +71,7 @@ class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
         
         physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
         physicsWorld.contactDelegate = self
-
+        
         let pegSpacing: CGFloat = 30
         let pinRadius: CGFloat = 3.5
         let pinPhysicsRadius: CGFloat = 8
@@ -158,11 +168,10 @@ class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    func dropBall() {
-        let targetSlotIndex = selectSlotIndex(probabilities: probabilities)
+    func dropBall(multi: Double, liveBalance: Double) {
         var randomRecordingIndex = 0
         for entry in ballRecordings {
-            if multipliers[targetSlotIndex] == entry!["multiplier"]! as! Double {
+            if multi == entry!["multiplier"]! as! Double {
                 let posEntires = entry!["positions"] as! [[String: Any]]
                 randomRecordingIndex = Int(arc4random_uniform(UInt32(posEntires.count)))
             }
@@ -186,7 +195,7 @@ class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
         ball.physicsBody!.contactTestBitMask = slotCategory
         ball.physicsBody!.collisionBitMask = slotCategory | pinCategory
         ball.name = "ball"
-        ball.userData = ["multi": multipliers[targetSlotIndex], "randomRecordingIndex": randomRecordingIndex, "frameIndex": 0]
+        ball.userData = ["multi": multi, "liveBalance": liveBalance, "randomRecordingIndex": randomRecordingIndex, "frameIndex": 0]
         
         addChild(ball)
     }
@@ -202,6 +211,7 @@ class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
             let slot = (contact.bodyA.categoryBitMask == slotCategory ? contact.bodyA.node : contact.bodyB.node) as? SKShapeNode
             
             if (ball != nil) {
+                self.liveGameBalance = ball?.userData!["liveBalance"] as! Double
                 ball!.removeFromParent()
             }
             
@@ -217,40 +227,16 @@ class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    func selectSlotIndex(probabilities: [Double]) -> Int {
-        let randomValue = Double.random(in: 0...1) // Step 1
-        var cumulativeProbability: Double = 0.0  // Step 2
-
-        for (index, probability) in probabilities.enumerated() { // Step 3
-            cumulativeProbability += probability // Step 4
-            if randomValue <= cumulativeProbability { // Step 5
-                return index // Step 6
-            }
-        }
-
-        return probabilities.count - 1 // Fallback
-    }
-    
     private func makeVerticalText(from text: String) -> String {
         return text.map { String($0) }.joined(separator: "\n")
-    }
-    
-    func addGradientBackground() {
-        let size = self.size
-        let texture = SKTexture(size: size, colors: [.deepBlack, .lighterBlack, .evenLighterBlack])
-        let background = SKSpriteNode(texture: texture)
-        background.size = size
-        background.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        background.zPosition = -1 // Ensure it is behind all other nodes
-        addChild(background)
     }
     
     override func update(_ currentTime: TimeInterval) {
         enumerateChildNodes(withName: "ball") { node, _ in
             if let ball = node as? SKShapeNode {
                 let multi = ball.userData!["multi"] as! Double
-                let frameIndex = ball.userData!["frameIndex"] as! Int
                 let recordingIndex = ball.userData!["randomRecordingIndex"] as! Int
+                let frameIndex = ball.userData!["frameIndex"] as! Int
                 
                 let multiEntry = self.ballRecordings.first(where: {$0!["multiplier"]! as! Double == multi})
                 let recordings = multiEntry!!["positions"] as! [[String: Any]]
@@ -265,5 +251,27 @@ class plinkoGameScene: SKScene, SKPhysicsContactDelegate {
                 ball.userData!["frameIndex"] = ball.userData!["frameIndex"] as! Int + 1
             }
         }
+    }
+    
+    func addGradientBackground() {
+        let size = self.size
+        let texture = SKTexture(size: size, colors: [UIColor(Color(hex: "0f212e")!),
+                                                     UIColor(Color(hex: "0e1e29")!),
+                                                             UIColor(Color(hex: "0c1a25")!),
+                                                                     UIColor(Color(hex: "0b1720")!),
+                                                                             UIColor(Color(hex: "09141c")!),
+                                                                                     UIColor(Color(hex: "081117")!),
+                                                                                             UIColor(Color(hex: "060d12")!),
+                                                                                                     UIColor(Color(hex: "081117")!),
+                                                                                                             UIColor(Color(hex: "09141c")!),
+                                                                                                                     UIColor(Color(hex: "0b1720")!),
+                                                                                                                             UIColor(Color(hex: "0c1a25")!),
+                                                                                                                                     UIColor(Color(hex: "0e1e29")!),
+                                                                                                                                             UIColor(Color(hex: "0f212e")!),])
+        let background = SKSpriteNode(texture: texture)
+        background.size = size
+        background.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        background.zPosition = -1 // Ensure it is behind all other nodes
+        addChild(background)
     }
 }
